@@ -47,7 +47,48 @@ function findModuleNames({ file, ast }) {
   const moduleNames = [];
   const ImportVisitor = {
     ImportDeclaration(node) {
+      // import foo from 'bar'
       moduleNames.push(node.source.value);
+    },
+
+    ExpressionStatement(node) {
+      // require('no-assignment');
+      if (!node.expression.callee) {
+        return;
+      }
+      if (node.expression.callee.name !== 'require') {
+        return;
+      }
+
+      if (node.expression.arguments.length !== 1) {
+        return;
+      }
+      moduleNames.push(node.expression.arguments[0].value);
+    },
+
+    VariableDeclaration(node) {
+      // const foo = require('foo')
+      if (!node.declarations || node.declarations.length > 1) {
+        return undefined;
+      }
+
+      const declaration = node.declarations[0];
+      if (!declaration.init) {
+        // e.g. `let foo;`
+        return undefined;
+      }
+      if (declaration.init.type !== 'CallExpression') {
+        return undefined;
+      }
+
+      if (declaration.init.arguments.length !== 1) {
+        return undefined;
+      }
+
+      if (declaration.init.arguments[0].type !== 'StringLiteral') {
+        return undefined;
+      }
+      moduleNames.push(declaration.init.arguments[0].value);
     },
   };
 
