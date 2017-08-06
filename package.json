@@ -10,6 +10,9 @@
   "author": "Henric Trotzig <henric.trotzig@brigade.com>",
   "license": "MIT",
   "dependencies": {
-    "glob": "^7.1.2"
+    "babylon": "^6.17.4",
+    "babylon-walk": "^1.0.2",
+    "glob": "^7.1.2",
+    "require-relative": "^0.8.7"
   }
 }
