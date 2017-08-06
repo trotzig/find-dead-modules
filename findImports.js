@@ -1,9 +1,11 @@
-const fs = require('fs');
 const path = require('path');
 
 const babylon = require('babylon');
 const requireRelative = require('require-relative');
 const walk = require('babylon-walk');
+
+const findPathsInJsonFile = require('./findPathsInJsonFile');
+const readFile = require('./readFile');
 
 function parse(fileContent) {
   return babylon.parse(fileContent, {
@@ -22,16 +24,8 @@ function parse(fileContent) {
 }
 
 function fileToAst(file) {
-  if (/\.json$/.test(file)) {
-    // don't parse these files
-    return Promise.resolve({ file, ast: parse('') });
-  }
   return new Promise((resolve, reject) => {
-    fs.readFile(file, 'utf8', (err, fileContent) => {
-      if (err) {
-        reject(new Error(err));
-        return;
-      }
+    readFile(file).then((fileContent) => {
       try {
         resolve({ file, ast: parse(fileContent) });
       } catch (error) {
@@ -69,24 +63,28 @@ function findModuleNames({ file, ast }) {
     VariableDeclaration(node) {
       // const foo = require('foo')
       if (!node.declarations || node.declarations.length > 1) {
-        return undefined;
+        return;
       }
 
       const declaration = node.declarations[0];
       if (!declaration.init) {
         // e.g. `let foo;`
-        return undefined;
+        return;
       }
       if (declaration.init.type !== 'CallExpression') {
-        return undefined;
+        return;
+      }
+
+      if (declaration.init.callee.name !== 'require') {
+        return;
       }
 
       if (declaration.init.arguments.length !== 1) {
-        return undefined;
+        return;
       }
 
       if (declaration.init.arguments[0].type !== 'StringLiteral') {
-        return undefined;
+        return;
       }
       moduleNames.push(declaration.init.arguments[0].value);
     },
@@ -113,11 +111,14 @@ function resolveModuleNames({ file, moduleNames }) {
     try {
       return normalizePath(requireRelative.resolve(moduleName, path.dirname(file)));
     } catch (err) {
-      console.warn('FAILED TO RESOLVE', moduleName, 'from', absoluteFilePath, err);
+      console.warn('FAILED TO RESOLVE', moduleName);
     }
   });
 }
 
 module.exports = function findImports(file) {
+  if (/\.json$/.test(file)) {
+    return Promise.resolve(findPathsInJsonFile(file));
+  }
   return fileToAst(file).then(findModuleNames).then(resolveModuleNames);
 };

@@ -5,7 +5,14 @@ module.exports = function findAllFiles() {
     glob(
       '**/*.js*',
       {
-        ignore: ['**/node_modules/**'],
+        ignore: [
+          '**/node_modules/**',
+          '**/__tests__/**',
+          '**/test/**',
+          '**/test.js*',
+          '**/__generated__/**',
+          '**/__mocks__/**',
+        ],
       },
       (err, files) => {
         if (err) {

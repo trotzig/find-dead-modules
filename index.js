@@ -1,12 +1,19 @@
 const findAllFiles = require('./findAllFiles');
 const findAllImports = require('./findAllImports');
 
+require.extensions['.jsx'] = function(content, filename) {
+  return content;
+};
+
 findAllFiles()
   .then(findAllImports)
   .then(({ files, imports }) => {
-    const difference = files.filter(x => !imports.has(x));
-    if (difference.length) {
-      console.log([...difference].join('\n'));
+    const diffs = files
+      .filter(x => !imports.has(x))
+      .filter(x => !/package\.json/.test(x));
+
+    if (diffs.length) {
+      console.log([...diffs].join('\n'));
       process.exit(1);
     }
   })
