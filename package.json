@@ -5,5 +5,8 @@
   "main": "index.js",
   "repository": "git@github.com:trotzig/find-dead-modules.git",
   "author": "Henric Trotzig <henric.trotzig@brigade.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "glob": "^7.1.2"
+  }
 }
