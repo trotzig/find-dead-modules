@@ -118,7 +118,7 @@ function resolveModuleNames({ file, moduleNames }) {
       return stripCwd(requireRelative.resolve(
         normalizeModuleName(moduleName), path.dirname(file)));
     } catch (err) {
-      console.warn('FAILED TO RESOLVE', moduleName);
+      // we should probably log this somewhere
     }
   });
 }

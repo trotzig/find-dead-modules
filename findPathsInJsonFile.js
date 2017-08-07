@@ -5,7 +5,11 @@ const COULD_BE_PATH = /\.js[a-z]*$/;
 
 function findPathsIter(item, result = []) {
   if (typeof item === 'string' && COULD_BE_PATH.test(item)) {
-    result.push(item);
+    // Finds e.g.
+    // 'src/foo.js'
+    // 'node src/foo.js'
+    const tokens = item.split(/\s/);
+    result.push(tokens[tokens.length - 1]);
   }
   if (typeof item === 'object' && item !== null) {
     Object.keys(item).forEach((key) => findPathsIter(item[key], result));

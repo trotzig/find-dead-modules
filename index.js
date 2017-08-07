@@ -1,5 +1,6 @@
 const findAllFiles = require('./findAllFiles');
 const findAllImports = require('./findAllImports');
+const isIgnored = require('./isIgnored');
 
 require.extensions['.jsx'] = function(content, filename) {
   return content;
@@ -10,8 +11,9 @@ findAllFiles()
   .then(({ files, imports }) => {
     const diffs = files
       .filter(x => !imports.has(x))
-      .filter(x => !/package\.json/.test(x))
-      .filter(x => !/.babelrc/.test(x));
+      .filter(x => {
+        return !isIgnored(x);
+      });
 
     if (diffs.length) {
       console.log([...diffs].join('\n'));
