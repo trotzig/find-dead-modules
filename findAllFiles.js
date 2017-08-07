@@ -27,7 +27,6 @@ module.exports = function findAllFiles() {
         glob('**/.babelrc', {
           ignore: ['**/node_modules/**'],
         }, (err2, babelRcFiles) => {
-          console.log(babelRcFiles);
           if (err2) {
             reject(err2);
             return;

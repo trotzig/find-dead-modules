@@ -6,6 +6,7 @@ const walk = require('babylon-walk');
 
 const findPathsInJsonFile = require('./findPathsInJsonFile');
 const readFile = require('./readFile');
+const stripCwd = require('./stripCwd');
 
 function parse(fileContent) {
   return babylon.parse(fileContent, {
@@ -35,14 +36,22 @@ function fileToAst(file) {
   });
 }
 
+const COULD_BE_PATH = /[a-zA-Z0-9-_\/]+\.js[a-z]*$/;
+
 // Finds import statements in an ast (either commonjs ones using `require`, or
 // es6 ones using `import from`).
 function findModuleNames({ file, ast }) {
-  const moduleNames = [];
+  const moduleNames = new Set();
   const ImportVisitor = {
     ImportDeclaration(node) {
       // import foo from 'bar'
-      moduleNames.push(node.source.value);
+      moduleNames.add(node.source.value);
+    },
+
+    StringLiteral(node) {
+      if (COULD_BE_PATH.test(node.value)) {
+        moduleNames.add(node.value);
+      }
     },
 
     ExpressionStatement(node) {
@@ -57,7 +66,7 @@ function findModuleNames({ file, ast }) {
       if (node.expression.arguments.length !== 1) {
         return;
       }
-      moduleNames.push(node.expression.arguments[0].value);
+      moduleNames.add(node.expression.arguments[0].value);
     },
 
     VariableDeclaration(node) {
@@ -86,19 +95,12 @@ function findModuleNames({ file, ast }) {
       if (declaration.init.arguments[0].type !== 'StringLiteral') {
         return;
       }
-      moduleNames.push(declaration.init.arguments[0].value);
+      moduleNames.add(declaration.init.arguments[0].value);
     },
   };
 
   walk.simple(ast, ImportVisitor);
-  return { file, moduleNames };
-}
-
-function normalizePath(filePath) {
-  if (filePath.startsWith(process.cwd())) {
-    return filePath.slice(process.cwd().length + 1);
-  }
-  return filePath;
+  return { file, moduleNames: [...moduleNames] };
 }
 
 function normalizeModuleName(moduleName) {
@@ -113,7 +115,7 @@ function resolveModuleNames({ file, moduleNames }) {
   const absoluteFilePath = path.join(process.cwd(), file);
   return moduleNames.map(moduleName => {
     try {
-      return normalizePath(requireRelative.resolve(
+      return stripCwd(requireRelative.resolve(
         normalizeModuleName(moduleName), path.dirname(file)));
     } catch (err) {
       console.warn('FAILED TO RESOLVE', moduleName);

@@ -10,7 +10,8 @@ findAllFiles()
   .then(({ files, imports }) => {
     const diffs = files
       .filter(x => !imports.has(x))
-      .filter(x => !/package\.json/.test(x));
+      .filter(x => !/package\.json/.test(x))
+      .filter(x => !/.babelrc/.test(x));
 
     if (diffs.length) {
       console.log([...diffs].join('\n'));
