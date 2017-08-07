@@ -4,6 +4,7 @@ const babylon = require('babylon');
 const requireRelative = require('require-relative');
 const walk = require('babylon-walk');
 
+const expandPath = require('./expandPath');
 const findPathsInJsonFile = require('./findPathsInJsonFile');
 const readFile = require('./readFile');
 const stripCwd = require('./stripCwd');
@@ -50,7 +51,9 @@ function findModuleNames({ file, ast }) {
 
     StringLiteral(node) {
       if (COULD_BE_PATH.test(node.value)) {
-        moduleNames.add(node.value);
+        expandPath(node.value, file).forEach((expanded) => {
+          moduleNames.add(expanded);
+        });
       }
     },
 
@@ -118,7 +121,9 @@ function resolveModuleNames({ file, moduleNames }) {
       return stripCwd(requireRelative.resolve(
         normalizeModuleName(moduleName), path.dirname(file)));
     } catch (err) {
-      // we should probably log this somewhere
+      // We should probably log this somewhere. At least we can hold on to the
+      // moduleName.
+      return moduleName;
     }
   });
 }
