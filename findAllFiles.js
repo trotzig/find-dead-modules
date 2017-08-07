@@ -7,9 +7,14 @@ module.exports = function findAllFiles() {
       {
         ignore: [
           '**/node_modules/**',
+          '**/dist/**',
+          '**/build/**',
           '**/__tests__/**',
           '**/test/**',
           '**/test.js*',
+          '**/index-test.js*',
+          '**/index-examples.js*',
+          '**/index-messages.js*',
           '**/__generated__/**',
           '**/__mocks__/**',
         ],
@@ -19,7 +24,16 @@ module.exports = function findAllFiles() {
           reject(err);
           return;
         }
-        resolve(files);
+        glob('**/.babelrc', {
+          ignore: ['**/node_modules/**'],
+        }, (err2, babelRcFiles) => {
+          console.log(babelRcFiles);
+          if (err2) {
+            reject(err2);
+            return;
+          }
+          resolve(files.concat(babelRcFiles));
+        });
       }
     );
   });

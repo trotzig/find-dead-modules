@@ -101,6 +101,10 @@ function normalizePath(filePath) {
   return filePath;
 }
 
+function normalizeModuleName(moduleName) {
+  return moduleName.replace(/^.+\?.+\!/, '');
+}
+
 /**
  * Uses require.resolve to find the path to the module referenced by the module
  * name.
@@ -109,7 +113,8 @@ function resolveModuleNames({ file, moduleNames }) {
   const absoluteFilePath = path.join(process.cwd(), file);
   return moduleNames.map(moduleName => {
     try {
-      return normalizePath(requireRelative.resolve(moduleName, path.dirname(file)));
+      return normalizePath(requireRelative.resolve(
+        normalizeModuleName(moduleName), path.dirname(file)));
     } catch (err) {
       console.warn('FAILED TO RESOLVE', moduleName);
     }
@@ -117,7 +122,7 @@ function resolveModuleNames({ file, moduleNames }) {
 }
 
 module.exports = function findImports(file) {
-  if (/\.json$/.test(file)) {
+  if (/\.json|\.babelrc$/.test(file)) {
     return Promise.resolve(findPathsInJsonFile(file));
   }
   return fileToAst(file).then(findModuleNames).then(resolveModuleNames);
