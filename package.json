@@ -1,6 +1,6 @@
 {
   "name": "find-dead-modules",
-  "version": "1.0.0-alpha.1",
+  "version": "1.0.0-alpha.2",
   "description": "A script that finds unused/dead javascript modules",
   "main": "index.js",
   "bin": {
