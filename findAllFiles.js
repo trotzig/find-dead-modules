@@ -3,7 +3,7 @@ const glob = require('glob');
 module.exports = function findAllFiles() {
   return new Promise((resolve, reject) => {
     glob(
-      '**/*.js*',
+      '**/@(*.js|*.jsx|*.json|*.ts|*.tsx)',
       {
         ignore: [
           '**/node_modules/**',
