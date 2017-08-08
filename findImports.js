@@ -5,7 +5,6 @@ const requireRelative = require('require-relative');
 const walk = require('babylon-walk');
 
 const expandPath = require('./expandPath');
-const findPathsInJsonFile = require('./findPathsInJsonFile');
 const readFile = require('./readFile');
 const stripCwd = require('./stripCwd');
 
@@ -15,6 +14,7 @@ function parse(fileContent) {
     plugins: [
       'jsx',
       'flow',
+      'typescript',
       'objectRestSpread',
       'decorators',
       'classProperties',
@@ -28,11 +28,18 @@ function parse(fileContent) {
 function fileToAst(file) {
   return new Promise((resolve, reject) => {
     readFile(file).then((fileContent) => {
+      let normalizedContent = fileContent;
+      if (/\.json|\.babelrc$/.test(file)) {
+        // Make json parseable by babylon by assigning the json object to
+        // something:
+        normalizedContent = 'const _ = ' + fileContent;
+      }
       try {
-        resolve({ file, ast: parse(fileContent) });
+        resolve({ file, ast: parse(normalizedContent) });
       } catch (error) {
         console.error('Failed to parse', file);
-        reject(error);
+        //reject(error);
+        resolve({ file, ast: parse('') });
       }
     });
   });
@@ -51,11 +58,14 @@ function findModuleNames({ file, ast }) {
     },
 
     StringLiteral(node) {
-      if (COULD_BE_PATH.test(node.value)) {
-        expandPath(node.value, file).forEach((expanded) => {
-          moduleNames.add(expanded);
-        });
-      }
+      const all = node.value.split(/\s/);
+      all.forEach((value) => {
+        if (COULD_BE_PATH.test(value)) {
+          expandPath(value, file).forEach((expanded) => {
+            moduleNames.add(expanded);
+          });
+        }
+      });
     },
 
     ExpressionStatement(node) {
@@ -130,8 +140,5 @@ function resolveModuleNames({ file, moduleNames }) {
 }
 
 module.exports = function findImports(file) {
-  if (/\.json|\.babelrc$/.test(file)) {
-    return Promise.resolve(findPathsInJsonFile(file));
-  }
   return fileToAst(file).then(findModuleNames).then(resolveModuleNames);
 };
