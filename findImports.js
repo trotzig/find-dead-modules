@@ -31,6 +31,7 @@ function fileToAst(file) {
       try {
         resolve({ file, ast: parse(fileContent) });
       } catch (error) {
+        console.error('Failed to parse', file);
         reject(error);
       }
     });
