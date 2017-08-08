@@ -16,8 +16,6 @@ module.exports = function findAllFiles() {
           '**/test/**',
           '**/test.js*',
           '**/index-test.js*',
-          '**/index-examples.js*',
-          '**/index-messages.js*',
           '**/__generated__/**',
           '**/__mocks__/**',
         ],
